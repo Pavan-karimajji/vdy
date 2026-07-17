@@ -18,9 +18,11 @@ add_executable(vdy_tests
     unit/test_param_loader.cpp
 )
 
+find_package(AdasSharedConfig REQUIRED)
+
 target_compile_definitions(vdy_tests PRIVATE
     ADAS_VDY_TEST_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
-    ADAS_VDY_SRC_PROJECT_DIR="${CMAKE_SOURCE_DIR}/src/project"
+    ADAS_VDY_SHARED_CONFIG_DIR="${adas-shared-config_PACKAGE_FOLDER_RELEASE}/projects"
 )
 
 target_link_libraries(vdy_tests PRIVATE

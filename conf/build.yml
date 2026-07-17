@@ -4,6 +4,7 @@ variants:
       - protobuf/3.21.12
       - yaml-cpp/0.8.0
       - adas-interfaces/1.0.0
+      - adas-shared-config/1.0.0
     tool_requires:
       - protobuf/3.21.12
     sil:
@@ -14,6 +15,7 @@ variants:
       - protobuf/3.21.12
       - yaml-cpp/0.8.0
       - adas-interfaces/1.0.0
+      - adas-shared-config/1.0.0
     tool_requires:
       - protobuf/3.21.12
     sil:

@@ -20,6 +20,6 @@ build.bat base gtest   vs2026 [clean]
 - `src/platform/standalone/` — inert placeholder
 - `src/platform/autosar/` — production target (Adaptive AUTOSAR)
 - `src/platform/tda4vm/`, `src/platform/orin/` — SoC placeholders
-- `src/project/<name>/ego_params.yaml` — ego vehicle-wide physical parameters (vdy's own calibration input)
+- ego vehicle-wide physical parameters (`ego_params.yaml`) — relocated to the `shared_config` submodule (`adas-shared-config` Conan package), since `df` also needs it; resolved via `AdasSharedConfig`'s installed package path, not a local folder
 
 Current status: port + function skeleton — no real estimation math yet (staleness/validity gating only, publishes a neutral placeholder `VehDyn` every cycle).

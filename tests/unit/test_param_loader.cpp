@@ -15,7 +15,7 @@ namespace {
 
 constexpr auto kFunctionParamsFixture = ADAS_VDY_TEST_FIXTURE_DIR "/function_params_test.yaml";
 constexpr auto kEgoParamsFixture = ADAS_VDY_TEST_FIXTURE_DIR "/ego_params_test.yaml";
-constexpr auto kRealBaseEgoParams = ADAS_VDY_SRC_PROJECT_DIR "/base/ego_params.yaml";
+constexpr auto kRealBaseEgoParams = ADAS_VDY_SHARED_CONFIG_DIR "/base/vehicle/ego_params.yaml";
 
 TEST(ParamLoaderTest, SectionReadsExistingKeyFromNamedSection) {
   ParamLoader loader(kFunctionParamsFixture);
@@ -34,8 +34,9 @@ TEST(ParamLoaderTest, MissingFileFallsBackToCallerDefaultEverywhere) {
   EXPECT_DOUBLE_EQ(loader.root().get<double>("EGO_WHEELBASE_M", 9.0), 9.0);
 }
 
-// Proves the ego_params.yaml relocation actually works end-to-end against the
-// real file, not just a test fixture copy.
+// Proves the shared_config-relocated ego_params.yaml actually resolves
+// end-to-end through the Conan-installed package path, not just a test
+// fixture copy.
 TEST(ParamLoaderTest, RealBaseEgoParamsFileReadsExpectedWheelbase) {
   ParamLoader loader(kRealBaseEgoParams);
   EXPECT_DOUBLE_EQ(loader.root().get<double>("EGO_WHEELBASE_M", -1.0), 2.7);
