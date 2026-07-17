@@ -15,7 +15,7 @@ endif()
 # to ParamLoader directly — no compile-time path-baking exists here (or is
 # needed) yet.
 if(NOT DEFINED ADAS_PROJECT)
-    set(ADAS_PROJECT base CACHE STRING "Which src/project/<name> calibration folder this build is associated with, e.g. base, proj_alpha")
+    set(ADAS_PROJECT base CACHE STRING "Which src/project/<name> calibration folder this build is associated with, e.g. base, cus1")
 endif()
 
 find_package(AdasInterfaces REQUIRED)

@@ -10,7 +10,7 @@ variants:
     sil:
       platforms:
         - build: vs2026
-  proj_alpha:
+  cus1:
     requires:
       - protobuf/3.21.12
       - yaml-cpp/0.8.0
