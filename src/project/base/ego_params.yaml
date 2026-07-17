@@ -1,0 +1,27 @@
+# Ego vehicle-wide physical parameters — shared across modules (df, vdy,
+# perception-core, planning, ...), NOT per-function calibration. Sourced from
+# gen1 FCT's VehParMain_t/VehParAdd_t (algo_type.h, src/fct_sen/platform/
+# rad6xx/FCT_COMMON) — driving-function-relevant fields only, deliberately
+# NOT the parking-domain Vehicle_Params_config.json.
+#
+# Values below are illustrative placeholders (roughly a mid-size sedan), not a
+# specific certified vehicle's spec sheet. Replace with real measured/OEM
+# values when a target vehicle is chosen.
+#
+# Relocated 2026-07-17 (plan.md item 3) from the superproject-root
+# projects/base/ego_params.yaml — vdy is the genuine consumer of ego geometry
+# (wheelbase, track width, cornering stiffness are vehicle-dynamics-estimator
+# calibration inputs), df's own copy was always a read-only diagnostic
+# placeholder with no real consumer (docs/ego_params.md rule 8).
+
+EGO_LENGTH_M: 4.5
+EGO_WIDTH_M: 1.8
+EGO_OVERHANG_FRONT_M: 0.9
+EGO_WHEELBASE_M: 2.7
+EGO_TRACK_WIDTH_FRONT_M: 1.55
+EGO_TRACK_WIDTH_REAR_M: 1.53
+EGO_MASS_KG: 1450
+EGO_COG_HEIGHT_M: 0.55
+EGO_WHEEL_CIRCUMFERENCE_M: 2.0
+EGO_CORNERING_STIFFNESS_FRONT_N_PER_RAD: 80000
+EGO_CORNERING_STIFFNESS_REAR_N_PER_RAD: 80000

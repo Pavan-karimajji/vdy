@@ -1,0 +1,46 @@
+# Local CMake / MSVC build outputs (do not ignore src/component, src/platform, src/project)
+build/
+build-*/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+CTestTestfile.cmake
+Testing/
+
+# Visual Studio / MSBuild
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.user
+*.opensdf
+*.sdf
+.vs/
+x64/
+Win32/
+Release/
+Debug/
+RelWithDebInfo/
+MinSizeRel/
+*.dir/
+*.tlog
+*.obj
+*.exe
+*.dll
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.idb
+*.recipe
+*.lastbuildstate
+*.iobj
+*.ipdb
+
+# OS
+Thumbs.db
+.DS_Store

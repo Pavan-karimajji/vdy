@@ -1,0 +1,18 @@
+# Illustrative example project — deliberately different values from
+# src/project/base/ego_params.yaml, not a real second vehicle program.
+#
+# Relocated 2026-07-17 (plan.md item 3) from the superproject-root
+# projects/proj_alpha/ego_params.yaml — content unchanged, only the location
+# changes.
+
+EGO_LENGTH_M: 4.8
+EGO_WIDTH_M: 1.85
+EGO_OVERHANG_FRONT_M: 0.95
+EGO_WHEELBASE_M: 2.85
+EGO_TRACK_WIDTH_FRONT_M: 1.58
+EGO_TRACK_WIDTH_REAR_M: 1.56
+EGO_MASS_KG: 1620
+EGO_COG_HEIGHT_M: 0.58
+EGO_WHEEL_CIRCUMFERENCE_M: 2.05
+EGO_CORNERING_STIFFNESS_FRONT_N_PER_RAD: 85000
+EGO_CORNERING_STIFFNESS_REAR_N_PER_RAD: 85000

@@ -1,0 +1,21 @@
+variants:
+  base:
+    requires:
+      - protobuf/3.21.12
+      - yaml-cpp/0.8.0
+      - adas-interfaces/1.0.0
+    tool_requires:
+      - protobuf/3.21.12
+    sil:
+      platforms:
+        - build: vs2026
+  proj_alpha:
+    requires:
+      - protobuf/3.21.12
+      - yaml-cpp/0.8.0
+      - adas-interfaces/1.0.0
+    tool_requires:
+      - protobuf/3.21.12
+    sil:
+      platforms:
+        - build: vs2026
