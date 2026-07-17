@@ -45,9 +45,8 @@ if /I "%CLEAN%"=="clean" (
 )
 
 echo Installing Conan dependencies...
-set "ADAS_PROJECT=%PROJECT%"
 set "ADAS_PART=%TARGET%"
-conan install . --output-folder "%BUILD_DIR%" --build=missing -s build_type=%BUILD_TYPE%
+conan install . --output-folder "%BUILD_DIR%" --update --build=missing -o project=%PROJECT% -s build_type=%BUILD_TYPE%
 if errorlevel 1 exit /b 1
 
 echo Configuring preset %CFG_PRESET% (project=%PROJECT%) ...

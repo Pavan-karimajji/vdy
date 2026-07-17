@@ -41,6 +41,10 @@ MinSizeRel/
 *.iobj
 *.ipdb
 
+# Python (scripts/vdy_gui.py)
+__pycache__/
+*.pyc
+
 # OS
 Thumbs.db
 .DS_Store
