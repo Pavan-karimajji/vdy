@@ -1,3 +1,17 @@
+# package_kind/layout_kind: plan.md item 10
+# (docs/build_conanfile_commonization_plan.md §2) - data read by the common
+# scripts/build.py and conanfile.py templates so this component's real build
+# shape never becomes a code branch in either shared file.
+#
+# Target keys (sil:/gtest: below, §2.1a, revised 2026-07-20): no separate
+# targets: field - every real target is its own explicit key under
+# variants.<project>, discovered directly by build.py. gtest: reuses sil's
+# platforms: list via a YAML anchor/alias since both build for the same
+# toolchain today.
+
+package_kind: library
+layout_kind: output_folder
+
 variants:
   base:
     requires:
@@ -8,8 +22,10 @@ variants:
     tool_requires:
       - protobuf/3.21.12
     sil:
-      platforms:
+      platforms: &base_platforms
         - build: vs2026
+    gtest:
+      platforms: *base_platforms
   cus1:
     requires:
       - protobuf/3.21.12
@@ -19,5 +35,7 @@ variants:
     tool_requires:
       - protobuf/3.21.12
     sil:
-      platforms:
+      platforms: &cus1_platforms
         - build: vs2026
+    gtest:
+      platforms: *cus1_platforms
