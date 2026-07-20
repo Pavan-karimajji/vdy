@@ -1,7 +1,11 @@
-# package_kind/layout_kind: plan.md item 10
+# layout_kind: plan.md item 10
 # (docs/build_conanfile_commonization_plan.md §2) - data read by the common
 # scripts/build.py and conanfile.py templates so this component's real build
-# shape never becomes a code branch in either shared file.
+# shape never becomes a code branch in either shared file. package_kind
+# removed entirely (item 10's own follow-up finding, plan.md, 2026-07-20) -
+# library vs. application was never read differently anywhere except
+# conanfile.py's layout(), which now branches on Conan's own
+# self.package_type instead of a redundant second field.
 #
 # Target keys (sil:/gtest: below, §2.1a, revised 2026-07-20): no separate
 # targets: field - every real target is its own explicit key under
@@ -9,7 +13,6 @@
 # platforms: list via a YAML anchor/alias since both build for the same
 # toolchain today.
 
-package_kind: library
 layout_kind: output_folder
 
 variants:

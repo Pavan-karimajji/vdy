@@ -6,11 +6,20 @@ Physically identical across every component in this repo (df, vdy,
 perception-core, sil, interfaces, shared_config) - the only thing that
 differs between components is their own conf/build.yml. No component name
 or kind may ever become a code branch here; a real behavioral difference
-belongs in conf/build.yml as package_kind/layout_kind/package_id_extra, or
-as a component's own real target keys under variants.<project> (§2.1a),
-not in this file. Propagating a future fix means re-copying this file into
-every component's scripts/ by hand - an accepted cost
+belongs in conf/build.yml as layout_kind/package_id_extra, or as a
+component's own real target keys under variants.<project> (§2.1a), not in
+this file. Propagating a future fix means re-copying this file into every
+component's scripts/ by hand - an accepted cost
 (docs/build_conanfile_commonization_plan.md, "Core philosophy").
+
+package_kind (library/application/data) used to be a third such field,
+removed entirely 2026-07-20 (plan.md item 10's own follow-up finding): it
+was never read differently anywhere except conanfile.py's layout(), which
+now branches on Conan's own self.package_type instead. shared_config (the
+one component that used to short-circuit here as package_kind: data) now
+has a real CMakeLists.txt/build()/package() and goes through the exact
+same conan install -> cmake --preset -> cmake --build sequence as
+everyone else - zero branches left in this file.
 
 Target discovery (revised 2026-07-20, §0.3/§2.1a/§7a): there is no
 targets: metadata field. Every real target is its own key directly under
@@ -80,29 +89,13 @@ def target_blocks(project_conf):
     }
 
 
-def validate_data_component():
-    projects_dir = ROOT / "projects"
-    if not projects_dir.is_dir():
-        sys.exit("ERROR: projects/ directory missing")
-    found = list(projects_dir.glob("*/vehicle/ego_params.yaml"))
-    for f in found:
-        yaml.safe_load(f.read_text(encoding="utf-8"))  # raises on malformed YAML
-    print(f"OK: {len(found)} project config file(s) validated under {projects_dir}")
-
-
 def print_config(conf):
     """python build.py config - lists every real <project> <part> <platform>
     command this component accepts, read straight off conf/build.yml's own
     target keys (target_blocks(), §2.1a), with zero requires:/tool_requires:
     dependency-chain expansion (that's Conan's job at install time, not this
     listing's - docs/build_conanfile_commonization_plan.md §4.3)."""
-    package_kind = conf.get("package_kind", "library")
     variants = conf.get("variants", {}) or {}
-
-    if package_kind == "data":
-        for project in variants:
-            print(f"python build.py {project} <part> <platform>  (validate-only - part/platform ignored)")
-        return
 
     for project, project_conf in variants.items():
         for target, platforms in target_blocks(project_conf).items():
@@ -123,12 +116,7 @@ def main():
     args = p.parse_args()
 
     conf = load_conf()
-    package_kind = conf.get("package_kind", "library")
     layout_kind = conf.get("layout_kind", "output_folder")
-
-    if package_kind == "data":
-        validate_data_component()
-        return
 
     project_conf = (conf.get("variants") or {}).get(args.project, {})
     blocks = target_blocks(project_conf)
