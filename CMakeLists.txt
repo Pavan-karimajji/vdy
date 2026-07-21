@@ -18,7 +18,11 @@ if(NOT DEFINED ADAS_PROJECT)
     set(ADAS_PROJECT base CACHE STRING "Which src/project/<name> calibration folder this build is associated with, e.g. base, cus1")
 endif()
 
-find_package(AdasInterfaces REQUIRED)
+# Guarded (plan.md item 13, docs/build_superbuild_aggregator_plan.md §4) - see
+# modules/df/CMakeLists.txt's identical guard for the full rationale.
+if(NOT TARGET AdasInterfaces::AdasInterfaces)
+    find_package(AdasInterfaces REQUIRED)
+endif()
 
 add_subdirectory(src/component)
 
