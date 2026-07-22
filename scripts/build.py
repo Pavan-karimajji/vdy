@@ -176,6 +176,17 @@ def load_conf():
     return yaml.safe_load(conf_path.read_text(encoding="utf-8"))
 
 
+def declared_first_party(conf, project):
+    """This component's own first-party (adas-*) requires: for <project>, read
+    straight off its conf/build.yml. Logged at the top of every build so a log
+    says up front what it depended on, before the conan/cmake output (plan.md
+    item 18 follow-up). Only the DECLARED set is known here, before conan
+    install runs; each dependency's resolved source (Editable/Download/Cache) is
+    Conan's to decide and prints lower in this same log."""
+    variant = (conf.get("variants") or {}).get(project, {})
+    return [ref for ref in variant.get("requires", []) if ref.startswith("adas-")]
+
+
 def target_blocks(project_conf):
     """Every key under variants.<project> that is a mapping containing a
     platforms: list is a real, declared target (§2.1a) - no separate
@@ -301,6 +312,18 @@ def main():
     log_path = None
     if not args.no_log:
         log_path = open_log(log_dir, log_name)
+
+    # Declared dependency set at the very top, before the first build step, so
+    # the log is self-documenting about what it depended on (plan.md item 18
+    # follow-up). Same set a GUI shows as --with candidates via the root
+    # build.py's `deps` command.
+    deps = declared_first_party(conf, args.project)
+    log(f"First-party dependencies (conf/build.yml requires:, project={args.project}):")
+    for ref in deps:
+        log(f"  - {ref}")
+    if not deps:
+        log("  (none)")
+    log("")
 
     try:
         _build(args, layout_kind, build_type, output_base, build_dir)

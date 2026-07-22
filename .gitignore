@@ -41,9 +41,12 @@ MinSizeRel/
 *.iobj
 *.ipdb
 
-# Python (scripts/vdy_gui.py)
+# Python (scripts/build_gui.py)
 __pycache__/
 *.pyc
+
+# Developer GUI - machine-local settings (last-used selections)
+scripts/build_gui_config.json
 
 # OS
 Thumbs.db

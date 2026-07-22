@@ -17,5 +17,5 @@ if not defined PYCMD (
   exit /b 1
 )
 
-%PYCMD% "%~dp0scripts\vdy_gui.py"
+%PYCMD% "%~dp0scripts\build_gui.py"
 exit /b %errorlevel%
