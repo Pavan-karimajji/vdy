@@ -96,17 +96,24 @@ def log(text=""):
         _LOG.flush()
 
 
-def open_log(log_dir, target, platform):
-    """logs/<target>-<platform>.log inside this build's own output directory, so
-    it follows --build-dir automatically and needs no second location concept -
-    and so --clean removes a target's logs along with its build tree.
+def open_log(log_dir, name):
+    """logs/<name>.log inside this build's own output directory, so it follows
+    --build-dir automatically and needs no second location concept - and so
+    --clean removes a target's logs along with its build tree.
 
-    Truncated per run, not appended or timestamped: one file per
-    target+platform holding the most recent run. Chosen deliberately over
-    keeping history - it never grows and never needs pruning."""
+    <name> is the relocated build directory's own folder name when the
+    superproject passes --build-dir (so a ws/ log is self-identifying, e.g.
+    df-base-sil-vs2026.log rather than a generic sil-vs2026.log every module
+    would share), and <target>-<platform> for a directly-invoked module build
+    (unchanged pre-item-14 behavior - the module directory you're already in
+    identifies it). See main().
+
+    Truncated per run, not appended or timestamped: one file per build holding
+    the most recent run. Chosen deliberately over keeping history - it never
+    grows and never needs pruning."""
     global _LOG
     log_dir.mkdir(parents=True, exist_ok=True)
-    path = log_dir / f"{target}-{platform}.log"
+    path = log_dir / f"{name}.log"
     _LOG = open(path, "w", encoding="utf-8", errors="replace")
     return path
 
@@ -278,9 +285,14 @@ def main():
     if args.clean:
         rmtree_if_exists(build_dir)
 
+    # Log filename: the relocated build's own folder name when --build-dir is
+    # given (so every superproject ws/ log is self-identifying, e.g.
+    # df-base-sil-vs2026.log, distinct from every other module's build), else
+    # the plain <target>-<platform> a directly-invoked module has always used.
+    log_name = requested_dir.name if requested_dir else f"{args.target}-{args.platform}"
     log_path = None
     if not args.no_log:
-        log_path = open_log(build_dir / "logs", args.target, args.platform)
+        log_path = open_log(build_dir / "logs", log_name)
 
     try:
         _build(args, layout_kind, build_type, output_base, build_dir)
