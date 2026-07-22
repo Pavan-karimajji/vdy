@@ -79,11 +79,65 @@ ROOT = Path(__file__).resolve().parent.parent  # modules/<name>/
 TEST_TARGETS = ("gtest", "coverage")
 
 
+# Open log file for this run, or None before one has been opened / when logging
+# is off. Module-level rather than threaded through every call because run() is
+# invoked from several places and the log is a property of the whole invocation,
+# not of one command (plan.md item 18).
+_LOG = None
+
+
+def log(text=""):
+    """Print to the console AND to the run's log file. Console output is never
+    sacrificed for the log - watching a build live is the common case, and
+    losing that would be a regression (plan.md item 18)."""
+    print(text)
+    if _LOG is not None:
+        _LOG.write(text + "\n")
+        _LOG.flush()
+
+
+def open_log(log_dir, target, platform):
+    """logs/<target>-<platform>.log inside this build's own output directory, so
+    it follows --build-dir automatically and needs no second location concept -
+    and so --clean removes a target's logs along with its build tree.
+
+    Truncated per run, not appended or timestamped: one file per
+    target+platform holding the most recent run. Chosen deliberately over
+    keeping history - it never grows and never needs pruning."""
+    global _LOG
+    log_dir.mkdir(parents=True, exist_ok=True)
+    path = log_dir / f"{target}-{platform}.log"
+    _LOG = open(path, "w", encoding="utf-8", errors="replace")
+    return path
+
+
+def close_log():
+    global _LOG
+    if _LOG is not None:
+        _LOG.close()
+        _LOG = None
+
+
 def run(cmd, cwd):
-    print(" ".join(str(c) for c in cmd))
-    result = subprocess.run(cmd, cwd=str(cwd))
-    if result.returncode != 0:
-        sys.exit(result.returncode)
+    """Run a child process, streaming its output to the console and the log at
+    the same time. The child's own output is the whole point - a failing build
+    prints its real error from conan/cmake/ctest, not from this script - so it
+    is captured rather than inherited. Note the side effect: because stdout is
+    a pipe rather than a console, child tools drop ANSI colour and may batch
+    their output slightly differently than when run by hand."""
+    log(" ".join(str(c) for c in cmd))
+    proc = subprocess.Popen(
+        cmd, cwd=str(cwd),
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, encoding="utf-8", errors="replace", bufsize=1,
+    )
+    for line in proc.stdout:
+        log(line.rstrip("\n"))
+    proc.wait()
+    if proc.returncode != 0:
+        log(f"\nFAILED (exit {proc.returncode}): {' '.join(str(c) for c in cmd)}")
+        close_log()
+        sys.exit(proc.returncode)
 
 
 def rmtree_if_exists(path):
@@ -179,6 +233,8 @@ def main():
                    help="Remove this target+platform's build directory first")
     p.add_argument("--build-dir", default=None,
                    help="Where to build (default: <module>/build-<target>-<platform>)")
+    p.add_argument("--no-log", action="store_true",
+                   help="Don't write a log file (console output only)")
     p.add_argument("--upload", action="store_true",
                    help="package target only: also `conan upload` after `conan create`")
     args = p.parse_args()
@@ -205,6 +261,36 @@ def main():
     build_type = "Debug" if args.platform.endswith("_debug") else "Release"
     requested_dir = Path(args.build_dir).resolve() if args.build_dir else None
 
+    # Resolved once, here, because the log lives inside the build directory and
+    # therefore has to be known before anything runs. cmake_layout lets Conan
+    # append its own "build" under the output base; output_folder names the
+    # directory directly.
+    if layout_kind == "cmake_layout":
+        output_base = requested_dir or ROOT
+        build_dir = output_base / "build"
+    else:
+        output_base = None
+        build_dir = requested_dir or (ROOT / f"build-{args.target}-{args.platform}")
+
+    # --clean wipes the build tree, and the logs with it - so clean BEFORE
+    # opening the log, or a clean build's first act is deleting its own log
+    # file (plan.md item 18).
+    if args.clean:
+        rmtree_if_exists(build_dir)
+
+    log_path = None
+    if not args.no_log:
+        log_path = open_log(build_dir / "logs", args.target, args.platform)
+
+    try:
+        _build(args, layout_kind, build_type, output_base, build_dir)
+    finally:
+        if log_path is not None:
+            print(f"\nLog written to {log_path}")
+        close_log()
+
+
+def _build(args, layout_kind, build_type, output_base, build_dir):
     if args.target == "package":
         # conan create builds and packages through Conan's own flow - no
         # preset/build-folder involved at all, so it shares none of the
@@ -214,20 +300,17 @@ def main():
         if args.upload:
             run(["conan", "upload", package_ref(), "-r", "adas-local", "--confirm"], cwd=ROOT)
         else:
-            print(f"\nPackaged {package_ref()} into the local Conan cache. "
-                  f"Pass --upload to publish it to adas-local.")
+            log(f"\nPackaged {package_ref()} into the local Conan cache. "
+                f"Pass --upload to publish it to adas-local.")
         return
 
     if args.target == "docs":
         doxyfile = ROOT / "Doxyfile"
         if not doxyfile.is_file():
             sys.exit(f"ERROR: target 'docs' declared in conf/build.yml but no Doxyfile at {doxyfile}")
-        docs_dir = requested_dir or (ROOT / f"build-{args.target}-{args.platform}")
-        if args.clean:
-            rmtree_if_exists(docs_dir)
-        docs_dir.mkdir(parents=True, exist_ok=True)
+        build_dir.mkdir(parents=True, exist_ok=True)
         run(["doxygen", str(doxyfile)], cwd=ROOT)
-        print(f"\nDocs generated for project: {args.project}")
+        log(f"\nDocs generated for project: {args.project}")
         return
 
     # Discarded before EVERY build, whatever the layout_kind, and not only on
@@ -251,10 +334,6 @@ def main():
         # generated presets then already point at the right place, and
         # overriding -B would only fight them. Undefaulted, output_base is ROOT
         # and this reproduces exactly the pre-item-14 paths.
-        output_base = requested_dir or ROOT
-        build_dir = output_base / "build"
-        if args.clean:
-            rmtree_if_exists(build_dir)
         install_cmd = ["conan", "install", ".", "--output-folder", str(output_base),
                         "--update", "--build=missing",
                         "-s", f"build_type={build_type}"]
@@ -269,9 +348,6 @@ def main():
         # -B wins over a preset's own binaryDir. The preset is still what
         # supplies the generator/architecture/toolset and this target's cache
         # variables, so there's exactly one place those are declared.
-        build_dir = requested_dir or (ROOT / f"build-{args.target}-{args.platform}")
-        if args.clean:
-            rmtree_if_exists(build_dir)
         install_cmd = ["conan", "install", ".", "--output-folder", str(build_dir),
                         "--update", "--build=missing",
                         "-o", f"project={args.project}", "-s", f"build_type={build_type}"]
@@ -283,20 +359,20 @@ def main():
         test_cmd = ["ctest", "--test-dir", str(build_dir), "-C", build_type,
                     "--output-on-failure"]
 
-    print("Installing Conan dependencies...")
+    log("Installing Conan dependencies...")
     run(install_cmd, cwd=ROOT)
 
-    print(f"Configuring {args.target}-{args.platform} into {build_dir} (project={args.project}) ...")
+    log(f"Configuring {args.target}-{args.platform} into {build_dir} (project={args.project}) ...")
     run(configure_cmd, cwd=ROOT)
 
-    print(f"Building {args.target}-{args.platform} ...")
+    log(f"Building {args.target}-{args.platform} ...")
     run(build_cmd, cwd=ROOT)
 
     if args.target in TEST_TARGETS:
-        print("Running tests...")
+        log("Running tests...")
         run(test_cmd, cwd=ROOT)
 
-    print(f"\nBuild finished for target: {args.target} (platform: {args.platform}, project: {args.project})")
+    log(f"\nBuild finished for target: {args.target} (platform: {args.platform}, project: {args.project})")
 
 
 if __name__ == "__main__":

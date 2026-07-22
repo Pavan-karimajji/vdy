@@ -1,4 +1,4 @@
-// Copyright (c) L&T EPS. All Rights Reserved.
+// Copyright (c) LT EPS. All Rights Reserved.
 // Proprietary and Confidential.
 // COMPONENT: VDY
 /// @file
