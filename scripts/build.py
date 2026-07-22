@@ -206,17 +206,25 @@ def platform_names(platforms):
 
 
 def package_ref():
-    """This component's own "<name>/<version>" Conan reference, read straight
-    out of its conanfile.py - used only by the `package` target. Never derived
-    from the directory name, same reason the superproject's own build.py
-    doesn't: at least one component (shared_config -> adas-shared-config)
-    isn't a mechanical transform of its folder."""
-    text = (ROOT / "conanfile.py").read_text(encoding="utf-8")
-    name = re.search(r'\bname\s*=\s*"([^"]+)"', text)
-    version = re.search(r'\bversion\s*=\s*"([^"]+)"', text)
-    if not name or not version:
-        sys.exit("ERROR: could not read name/version from conanfile.py")
-    return f"{name.group(1)}/{version.group(1)}"
+    """This component's own "<name>/<version>" Conan reference, read from its
+    CMakeLists.txt project() line - the same single source of truth the
+    byte-identical conanfile.py's set_name()/set_version() read (plan.md item
+    20, docs/conanfile_commonality_plan.md). Used only by the `package` target.
+    Was scraped from `name = "..."`/`version = "..."` literals in conanfile.py
+    before item 20; those literals are gone now (set_name()/set_version()
+    derive them), so this reads the authoritative source directly. A pure-data
+    package whose project() has no VERSION (LANGUAGES NONE) keeps its version in
+    a VERSION file, the same fallback set_version() uses."""
+    text = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    name = re.search(r'project\(\s*([A-Za-z0-9_\-]+)', text)
+    if not name:
+        sys.exit("ERROR: could not read project name from CMakeLists.txt")
+    pkg = name.group(1)
+    vmatch = re.search(
+        r"project\(\s*" + re.escape(pkg) + r"\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)",
+        text, re.IGNORECASE)
+    version = vmatch.group(1) if vmatch else (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    return f"{pkg}/{version}"
 
 
 def print_config(conf):

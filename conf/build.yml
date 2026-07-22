@@ -15,6 +15,17 @@
 
 layout_kind: output_folder
 
+# recipe: the Conan-package identity the byte-identical conanfile.py template
+# reads (plan.md item 20, docs/conanfile_commonality_plan.md §7.2). Only the
+# data that cannot be derived from the package name lives here: package_type,
+# and the lib name(s). name/version come from CMakeLists.txt's project(); the
+# cmake target/file names are derived by convention (adas-vdy -> AdasVdy).
+# Named recipe: (not package:) to avoid clashing with the future `package`
+# build target under variants.<project>.
+recipe:
+  type: shared-library
+  libs: [vdy_sil]
+
 variants:
   base:
     requires:
