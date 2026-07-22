@@ -97,9 +97,10 @@ def log(text=""):
 
 
 def open_log(log_dir, name):
-    """logs/<name>.log inside this build's own output directory, so it follows
-    --build-dir automatically and needs no second location concept - and so
-    --clean removes a target's logs along with its build tree.
+    """<log_dir>/<name>.log. For a directly-invoked module build log_dir is
+    <build-dir>/logs (inside the build tree, so --clean takes it along); the
+    superproject overrides it via --log-dir to a central ws/logs so every
+    build's log sits in one place instead of scattered inside each build tree.
 
     <name> is the relocated build directory's own folder name when the
     superproject passes --build-dir (so a ws/ log is self-identifying, e.g.
@@ -240,6 +241,10 @@ def main():
                    help="Remove this target+platform's build directory first")
     p.add_argument("--build-dir", default=None,
                    help="Where to build (default: <module>/build-<target>-<platform>)")
+    p.add_argument("--log-dir", default=None,
+                   help="Where to write the log (default: <build-dir>/logs). The superproject "
+                        "points this at its central ws/logs so every build's log sits in one place, "
+                        "not scattered inside each build tree.")
     p.add_argument("--no-log", action="store_true",
                    help="Don't write a log file (console output only)")
     p.add_argument("--upload", action="store_true",
@@ -289,10 +294,13 @@ def main():
     # given (so every superproject ws/ log is self-identifying, e.g.
     # df-base-sil-vs2026.log, distinct from every other module's build), else
     # the plain <target>-<platform> a directly-invoked module has always used.
+    # Log directory: --log-dir when the superproject asks for a central ws/logs,
+    # otherwise inside this build's own tree (unchanged standalone behavior).
     log_name = requested_dir.name if requested_dir else f"{args.target}-{args.platform}"
+    log_dir = Path(args.log_dir).resolve() if args.log_dir else (build_dir / "logs")
     log_path = None
     if not args.no_log:
-        log_path = open_log(build_dir / "logs", log_name)
+        log_path = open_log(log_dir, log_name)
 
     try:
         _build(args, layout_kind, build_type, output_base, build_dir)
